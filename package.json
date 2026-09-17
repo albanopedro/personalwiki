@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite"
+    "dev": "vite",
+    "teste": "node server/teste.js"
   },
   "dependencies": {
     "react": "^19.1.0",
