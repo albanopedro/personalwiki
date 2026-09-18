@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config.js';
-import { parseFrontmatter, extractWikiLinks } from './parser.js';
+import { parseFrontmatter, extractWikiLinks, toKey } from './parser.js';
 
 // Pastas que existem dentro do vault mas nao sao notas.
 const IGNORED = ['.obsidian', '.trash', '.git'];
@@ -34,20 +34,6 @@ function findNoteFiles(dir) {
   }
 
   return files;
-}
-
-/**
- * Transforma um nome em "chave de busca": minusculo e com acentos num
- * formato unico.
- *
- * O normalize('NFC') resolve uma pegadinha do macOS: ele as vezes grava
- * o "í" do nome do arquivo como DOIS caracteres ("i" + acento solto),
- * enquanto o "í" digitado dentro da nota e UM caractere so. Na tela sao
- * identicos; para o computador sao textos diferentes. No seu vault, sem
- * esta linha, 35 dos 74 links quebram.
- */
-export function toKey(name) {
-  return name.normalize('NFC').toLowerCase().trim();
 }
 
 /** O frontmatter pode trazer um valor solto ou uma lista: sempre vira lista. */

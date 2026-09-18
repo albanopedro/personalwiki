@@ -2,6 +2,7 @@
 
 import MarkdownIt from 'markdown-it';
 import { splitTarget } from '../../server/parser.js';
+import { noteUrl } from './routes.js';
 
 const md = new MarkdownIt({
   html: false,     // HTML escrito dentro da nota aparece como TEXTO, nunca e executado
@@ -58,12 +59,21 @@ md.inline.ruler.before('link', 'wikilink', (state, silent) => {
   return true;
 });
 
-// Como uma peca "wikilink" vira HTML. O alvo fica guardado em data-target,
-// e e de la que o clique vai ler para onde ir.
-md.renderer.rules.wikilink = (tokens, idx) => {
+// Como uma peca "wikilink" vira HTML.  (Partes 8 e 13)
+// O nome do link e traduzido para o endereco da nota AQUI, na hora de
+// desenhar, pela funcao "resolve" que chega no env (o App monta essa funcao
+// com a lista de notas do menu). Assim o link ja nasce com o endereco certo,
+// como qualquer link da internet: Cmd+clique, copiar endereco, tudo funciona.
+md.renderer.rules.wikilink = (tokens, idx, options, env) => {
   const { target, display } = tokens[idx].meta;
   const esc = md.utils.escapeHtml;
-  return `<a class="wikilink" href="#" data-target="${esc(target)}">${esc(display)}</a>`;
+  const id = env.resolve?.(target) ?? null;
+
+  // Nota que ainda nao existe: nao parece clicavel, e o mouse em cima explica
+  if (!id) {
+    return `<span class="wikilink wikilink-broken" title="A nota “${esc(target)}” ainda não existe no vault">${esc(display)}</span>`;
+  }
+  return `<a class="wikilink" href="${esc(noteUrl(id))}">${esc(display)}</a>`;
 };
 
 // ---------------------------------------------------------------------------
@@ -117,7 +127,7 @@ md.core.ruler.push('callouts', (state) => {
     const header = new state.Token('html_block', '', 0);
     header.content =
       `<div class="callout-title">${CALLOUT_ICONS[type] ?? '📌'} ` +
-      `${md.renderInline(title)}</div>`;
+      `${md.renderInline(title, state.env)}</div>`;   // o env vai junto: sem ele, um [[link]] no titulo nao seria traduzido
     tokens.splice(i + 1, 0, header);
   }
 });
@@ -183,8 +193,8 @@ md.core.ruler.push('headings', (state) => {
  * titulos (para o sumario). O "env" e um objeto que o markdown-it carrega
  * pelas regras durante a conversao - e por ele que a regra acima devolve a lista.
  */
-export function renderMarkdown(text) {
-  const env = {};
+export function renderMarkdown(text, resolve = null) {
+  const env = { resolve };   // Parte 13: a funcao que traduz o nome de um [[link]] no id da nota
   const html = md.render(text, env);
   return { html, headings: env.headings ?? [] };
 }

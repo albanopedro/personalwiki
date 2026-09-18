@@ -1,7 +1,12 @@
+import { useNavigate } from 'react-router';
+
 // Area principal: mostra a nota aberta, ja formatada.
 // Parte 11: a rolagem ate a secao foi para o App, que e quem le o endereco.
 // A NoteView so desenha; o articleRef vem do App e aponta para o <article>.
-export default function NoteView({ note, rendered, articleRef, onOpenLink }) {
+export default function NoteView({ note, rendered, articleRef }) {
+  // Hook antes de qualquer "return": o React exige a mesma ordem em todo desenho.
+  const navigate = useNavigate();
+
   if (!note) {
     return (
       <main className="note-view">
@@ -10,15 +15,21 @@ export default function NoteView({ note, rendered, articleRef, onOpenLink }) {
     );
   }
 
-  // Os links vieram prontos do markdown-it, entao o React nao colocou
-  // onClick em nenhum deles. Em vez de um ouvinte por link, fica UM so no
-  // <article>: todo clique la dentro "sobe" ate ele (isso se chama
-  // delegacao de eventos), e aqui a gente ve se foi num wiki link.
+  if (!rendered) return <main className="note-view" />;   // a lista de notas ainda nao chegou (Parte 13)
+
+  // Os [[links]] vieram prontos do markdown-it: sao <a href> comuns, nao
+  // <Link> do React Router. E um clique comum num <a href> recarregaria a
+  // pagina inteira. Entao UM ouvinte so, no <article> (delegacao de eventos,
+  // Parte 8), faz o mesmo que o <Link> faz por dentro (Parte 12): segura o
+  // clique esquerdo sem teclas e troca a nota sem recarregar; o resto -
+  // Cmd+clique, Shift+clique... - fica com o navegador.  (Parte 13)
   function handleClick(event) {
     const link = event.target.closest('a.wikilink');
-    if (!link) return;                  // clicou em outra coisa: segue normal
-    event.preventDefault();             // impede o href="#" de pular a pagina
-    onOpenLink(link.dataset.target);    // data-target="..." vira dataset.target
+    if (!link) return;                                     // clicou em outra coisa
+    const modified = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+    if (event.button !== 0 || modified) return;            // aba nova: e com o navegador
+    event.preventDefault();                                // sem isso, a pagina recarregaria
+    navigate(link.getAttribute('href'));
   }
 
   return (

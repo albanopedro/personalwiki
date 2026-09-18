@@ -8,7 +8,12 @@
 //
 // As barras entre pasta e nome continuam barras de verdade: por isso cada
 // pedaco e codificado separado.
-export function noteUrl(id) {
+//
+// Parte 12: a busca e os backlinks mandam tambem uma linha, que vai NO
+// ENDERECO ("?linha=412"). Antes ela ia no state do React Router, mas o
+// state nao viaja para outra aba - e o Cmd+clique abriria a nota no topo.
+export function noteUrl(id, line = null) {
   const path = id.replace(/\.md$/, '').split('/').map(encodeURIComponent).join('/');
-  return `/nota/${path}`;
+  const url = `/nota/${path}`;
+  return line === null ? url : `${url}?linha=${line}`;
 }

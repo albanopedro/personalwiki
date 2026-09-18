@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import SearchResults from './SearchResults.jsx';
+import { noteUrl } from '../utils/routes.js';
 
 // Menu lateral: campo de busca + lista de notas agrupadas por pasta.
-export default function Sidebar({ notes, selectedId, onSelect, error }) {
+export default function Sidebar({ notes, selectedId, error }) {
   // O que esta escrito no campo de busca.  (Parte 9)
   const [query, setQuery] = useState('');
   const searching = query.trim().length >= 2;
@@ -24,14 +26,14 @@ export default function Sidebar({ notes, selectedId, onSelect, error }) {
       {error && <p className="error">{error}</p>}
 
       {searching
-        ? <SearchResults query={query} selectedId={selectedId} onSelect={onSelect} />
-        : <NoteTree notes={notes} selectedId={selectedId} onSelect={onSelect} />}
+        ? <SearchResults query={query} selectedId={selectedId} />
+        : <NoteTree notes={notes} selectedId={selectedId} />}
     </aside>
   );
 }
 
 // A lista de notas agrupada por pasta (a mesma da Parte 6).
-function NoteTree({ notes, selectedId, onSelect }) {
+function NoteTree({ notes, selectedId }) {
   // Agrupa assim: { "Apostila Engenharia de Software": [nota, nota, ...], "vida": [...] }
   const groups = {};
   for (const note of notes) {
@@ -46,9 +48,11 @@ function NoteTree({ notes, selectedId, onSelect }) {
       <ul>
         {items.map((note) => (
           <li key={note.id}>
-            <button
+            {/* Parte 12: um link de verdade (um <a href> na pagina). O clique
+                normal troca a nota sem recarregar nada; Cmd+clique abre em outra aba. */}
+            <Link
+              to={noteUrl(note.id)}
               className={note.id === selectedId ? 'note-button active' : 'note-button'}
-              onClick={() => onSelect(note.id)}
             >
               <span>{note.name}</span>
               {note.backlinkCount > 0 && (
@@ -56,7 +60,7 @@ function NoteTree({ notes, selectedId, onSelect }) {
                   {note.backlinkCount}
                 </span>
               )}
-            </button>
+            </Link>
           </li>
         ))}
       </ul>

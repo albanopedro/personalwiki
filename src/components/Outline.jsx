@@ -1,7 +1,11 @@
+import { Link } from 'react-router';
+
 // Sumario: a lista de titulos da nota aberta.  (Parte 10)
-// Clicar num titulo nao rola nada aqui: so avisa o App ("pula para este
-// titulo"), e quem rola e a NoteView - o mesmo caminho da busca e dos backlinks.
-export default function Outline({ headings, onJump }) {
+// Cada titulo e um link para "#secao" - so a parte do fim do endereco muda,
+// a nota continua a mesma. Quem rola ate la e o App, que le o endereco.
+// Clicar de novo no titulo em que voce ja esta nao cria passo repetido no
+// historico: o Link percebe que o destino e o endereco atual e substitui.
+export default function Outline({ headings }) {
   if (headings.length === 0) return null;
 
   return (
@@ -12,13 +16,13 @@ export default function Outline({ headings, onJump }) {
       <ul>
         {headings.map((h) => (
           <li key={h.slug}>
-            <button
+            <Link
               className="outline-item"
+              to={`#${h.slug}`}
               style={{ paddingLeft: 8 + (h.level - 1) * 12 }}   // recuo de acordo com o nivel
-              onClick={() => onJump(h.slug)}
             >
               {h.text}
-            </button>
+            </Link>
           </li>
         ))}
       </ul>

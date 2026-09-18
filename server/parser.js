@@ -145,3 +145,26 @@ export function extractWikiLinks(body) {
 
   return links;
 }
+
+// ---------------------------------------------------------------------------
+// Chave de um nome  (criada na Parte 4, no vault.js; mudou para ca na Parte 13)
+// ---------------------------------------------------------------------------
+
+/**
+ * Transforma um nome em "chave de busca": minusculo e com acentos num
+ * formato unico.
+ *
+ * O normalize('NFC') resolve uma pegadinha do macOS: ele as vezes grava
+ * o "í" do nome do arquivo como DOIS caracteres ("i" + acento solto),
+ * enquanto o "í" digitado dentro da nota e UM caractere so. Na tela sao
+ * identicos; para o computador sao textos diferentes. No seu vault, sem
+ * esta linha, 35 dos 74 links quebram.
+ *
+ * Mora aqui, e nao no vault.js, porque agora o navegador tambem usa (para
+ * traduzir os [[links]] na hora de desenhar). O vault.js le arquivos do
+ * disco, coisa que o navegador nao pode fazer; este arquivo so mexe com
+ * texto, entao roda dos dois lados - como o splitTarget, desde a Parte 8.
+ */
+export function toKey(name) {
+  return name.normalize('NFC').toLowerCase().trim();
+}

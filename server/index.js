@@ -6,7 +6,7 @@
 
 import express from 'express';
 import { config } from '../config.js';
-import { buildIndex, toKey } from './vault.js';
+import { buildIndex } from './vault.js';
 import { search } from './search.js';
 
 // O indice e montado UMA vez, quando o servidor liga.
@@ -53,21 +53,9 @@ app.get('/api/note', (req, res) => {
   res.json({ ...note, backlinks });
 });
 
-// Pergunta 3: "qual e o arquivo da nota com este nome?"  (Parte 8)
-// Quando voce clica em [[00 — Índice]], a tela so sabe o NOME escrito no
-// link. Esta rota consulta a mesma "lista telefonica" do indice (Parte 4),
-// com a mesma normalizacao de acentos e maiusculas.
-app.get('/api/resolve', (req, res) => {
-  const name = String(req.query.name ?? '');
-  const id = index.byName.get(toKey(name));
-
-  if (!id) {
-    return res.status(404).json({ error: `Nenhuma nota chamada "${name}"` });
-  }
-  res.json({ id });
-});
-
-// Pergunta 4: "onde aparece este texto?"  (Parte 9)
+// Pergunta 3: "onde aparece este texto?"  (Parte 9)
+// (A antiga pergunta 3, /api/resolve, saiu na Parte 13: o navegador
+// passou a traduzir os [[links]] sozinho, na hora de desenhar.)
 app.get('/api/search', (req, res) => {
   res.json(search(index, String(req.query.q ?? '')));
 });

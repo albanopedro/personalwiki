@@ -295,3 +295,18 @@ body {
 /* Quando a tela rola ate um titulo, ele nao fica grudado na borda de cima */
 .markdown h1, .markdown h2, .markdown h3,
 .markdown h4, .markdown h5, .markdown h6 { scroll-margin-top: 16px; }
+
+/* ---------- Links de navegacao (Parte 12) ---------- */
+/* Menu, busca, sumario e backlinks viraram <a>. O navegador sublinha todo
+   <a> por padrao; aqui eles continuam com cara de item de menu. */
+.note-button, .result-name, .result-hit, .backlink, .outline-item { text-decoration: none; }
+
+/* ---------- [[Link]] para nota que ainda nao existe (Parte 13) ---------- */
+/* Apagado e tracejado, como no Obsidian: nao tem cara de clicavel, e o
+   cursor de interrogacao convida a passar o mouse e ler a explicacao. */
+.markdown .wikilink-broken {
+  color: var(--muted);
+  text-decoration: underline dashed;
+  text-underline-offset: 3px;
+  cursor: help;
+}
