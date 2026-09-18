@@ -1,6 +1,7 @@
 // PARTE 7: transforma o texto markdown da nota em HTML formatado.
 
 import MarkdownIt from 'markdown-it';
+import { splitTarget } from '../../server/parser.js';
 
 const md = new MarkdownIt({
   html: false,     // HTML escrito dentro da nota aparece como TEXTO, nunca e executado
@@ -19,6 +20,50 @@ md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
   tokens[idx].attrSet('target', '_blank');
   tokens[idx].attrSet('rel', 'noopener noreferrer');
   return defaultLinkOpen(tokens, idx, options, env, self);
+};
+
+// ---------------------------------------------------------------------------
+// Wiki links: [[nota]] e [[nota|apelido]] viram links clicaveis  (Parte 8)
+// ---------------------------------------------------------------------------
+
+/**
+ * Regra "inline": roda DENTRO de cada trecho de texto, posicao por posicao.
+ * Quando encontra [[, procura o ]] que fecha e troca tudo por uma peca
+ * nova, do tipo "wikilink".
+ *
+ * Para separar alvo e apelido, usa o MESMO splitTarget do servidor
+ * (server/parser.js). Assim o indice e a tela nunca discordam sobre o
+ * que e um link.
+ */
+md.inline.ruler.before('link', 'wikilink', (state, silent) => {
+  const start = state.pos;
+  if (state.src.charCodeAt(start) !== 0x5b || state.src.charCodeAt(start + 1) !== 0x5b) {
+    return false;                                  // nao comeca com [[
+  }
+
+  const end = state.src.indexOf(']]', start + 2);
+  if (end === -1) return false;                    // abriu e nao fechou
+
+  const inner = state.src.slice(start + 2, end);
+  if (!inner.trim() || /[\[\]\n]/.test(inner)) return false;   // mesmas regras do parser
+
+  // "silent" = o markdown-it so quer saber SE aqui tem um link, sem criar nada
+  if (!silent) {
+    const { target, display } = splitTarget(inner);
+    const token = state.push('wikilink', '', 0);
+    token.meta = { target, display };
+  }
+
+  state.pos = end + 2;                             // continua depois do ]]
+  return true;
+});
+
+// Como uma peca "wikilink" vira HTML. O alvo fica guardado em data-target,
+// e e de la que o clique vai ler para onde ir.
+md.renderer.rules.wikilink = (tokens, idx) => {
+  const { target, display } = tokens[idx].meta;
+  const esc = md.utils.escapeHtml;
+  return `<a class="wikilink" href="#" data-target="${esc(target)}">${esc(display)}</a>`;
 };
 
 // ---------------------------------------------------------------------------

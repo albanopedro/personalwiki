@@ -46,7 +46,7 @@ function findNoteFiles(dir) {
  * identicos; para o computador sao textos diferentes. No seu vault, sem
  * esta linha, 35 dos 74 links quebram.
  */
-function toKey(name) {
+export function toKey(name) {
   return name.normalize('NFC').toLowerCase().trim();
 }
 

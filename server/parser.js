@@ -103,6 +103,22 @@ export function splitTarget(inner) {
   };
 }
 
+/**
+ * O trecho da linha em volta de um link, mostrado no painel de backlinks.
+ *
+ * (Corrigido na Parte 8.) Antes o trecho era so o COMECO da linha, cortado
+ * em 160 caracteres. Mas em 30 dos 73 links do vault a linha e mais longa
+ * que isso - numa tabela, o link pode estar na posicao 422 - e o trecho
+ * mostrado era justamente a parte que nao importava. Agora ele e centrado
+ * no link, e as reticencias mostram onde a linha continua.
+ */
+function contextAround(line, linkText) {
+  const pos = line.indexOf(linkText);
+  const from = Math.max(0, pos - 60);
+  const to = Math.min(line.length, pos + linkText.length + 60);
+  return (from > 0 ? '…' : '') + line.slice(from, to).trim() + (to < line.length ? '…' : '');
+}
+
 /** Lista todos os wiki links do corpo da nota, com a linha onde aparecem. */
 export function extractWikiLinks(body) {
   const links = [];
@@ -121,8 +137,8 @@ export function extractWikiLinks(body) {
         alias,                               // apelido, se tiver
         display,                             // o que aparece na tela
         line: i,                             // em que linha estava
-        context: line.trim().slice(0, 160),  // o trecho ao redor (usado depois
-                                             // para montar os backlinks)
+        context: contextAround(line.trim(), match[0]),   // o trecho em volta
+                                                         // do link (backlinks)
       });
     }
   });

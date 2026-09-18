@@ -6,7 +6,7 @@
 
 import express from 'express';
 import { config } from '../config.js';
-import { buildIndex } from './vault.js';
+import { buildIndex, toKey } from './vault.js';
 
 // O indice e montado UMA vez, quando o servidor liga.
 // Todas as perguntas depois disso sao respondidas direto da memoria.
@@ -50,6 +50,20 @@ app.get('/api/note', (req, res) => {
   }));
 
   res.json({ ...note, backlinks });
+});
+
+// Pergunta 3: "qual e o arquivo da nota com este nome?"  (Parte 8)
+// Quando voce clica em [[00 — Índice]], a tela so sabe o NOME escrito no
+// link. Esta rota consulta a mesma "lista telefonica" do indice (Parte 4),
+// com a mesma normalizacao de acentos e maiusculas.
+app.get('/api/resolve', (req, res) => {
+  const name = String(req.query.name ?? '');
+  const id = index.byName.get(toKey(name));
+
+  if (!id) {
+    return res.status(404).json({ error: `Nenhuma nota chamada "${name}"` });
+  }
+  res.json({ id });
 });
 
 app.listen(config.apiPort, () => {

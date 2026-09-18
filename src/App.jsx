@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Sidebar from './components/Sidebar.jsx';
 import NoteView from './components/NoteView.jsx';
+import Backlinks from './components/Backlinks.jsx';
 
 export default function App() {
   const [notes, setNotes] = useState([]);    // a lista do menu lateral
@@ -34,10 +35,23 @@ export default function App() {
     setNote(await res.json());
   }
 
+  // Roda quando o usuario clica num [[link]] dentro da nota.  (Parte 8)
+  // O link so tem o NOME da nota; a API descobre qual e o arquivo.
+  async function openLink(name) {
+    const res = await fetch(`/api/resolve?name=${encodeURIComponent(name)}`);
+    if (!res.ok) {
+      setError(`A nota "${name}" ainda não existe no vault.`);
+      return;
+    }
+    const { id } = await res.json();
+    openNote(id);
+  }
+
   return (
     <div className="app">
       <Sidebar notes={notes} selectedId={note?.id} onSelect={openNote} error={error} />
-      <NoteView note={note} />
+      <NoteView note={note} onOpenLink={openLink} />
+      <Backlinks note={note} onSelect={openNote} />
     </div>
   );
 }
