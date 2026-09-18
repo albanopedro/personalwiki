@@ -1,12 +1,6 @@
 import { createRoot } from 'react-dom/client';
+import App from './App.jsx';
+import './styles.css';
 
-// Procura a <div id="root"> la do index.html...
-const root = createRoot(document.getElementById('root'));
-
-// ...e manda o React desenhar isto dentro dela.
-root.render(
-  <div style={{ padding: 40 }}>
-    <h1>Personal Wiki</h1>
-    <p style={{ color: '#9aa3b2' }}>Parte 1: o esqueleto está de pé.</p>
-  </div>
-);
+// Procura a <div id="root"> do index.html e desenha o App dentro dela.
+createRoot(document.getElementById('root')).render(<App />);
