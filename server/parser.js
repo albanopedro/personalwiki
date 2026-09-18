@@ -62,3 +62,66 @@ export function parseFrontmatter(raw) {
 function clean(text) {
   return text.trim().replace(/^["']|["']$/g, '');
 }
+
+// ---------------------------------------------------------------------------
+// PARTE 3: wiki links
+// ---------------------------------------------------------------------------
+
+/**
+ * Encontra todo [[assim]] dentro do texto.
+ *
+ *   \[\[            duas colchetes literais (a barra invertida tira o
+ *                   significado especial que [ tem em expressoes regulares)
+ *   ([^\[\]\n]+?)   captura o miolo: qualquer coisa que NAO seja [ ] ou
+ *                   quebra de linha. O +? pega o menos possivel, para que
+ *                   [[a]] [[b]] vire dois links e nao um so.
+ *   \]\]            as duas colchetes que fecham
+ *   g               procura todas as ocorrencias, nao so a primeira
+ */
+const WIKILINK_RE = /\[\[([^\[\]\n]+?)\]\]/g;
+
+/**
+ * Separa o miolo de um link em alvo e apelido.
+ *
+ *   [[00 — Índice]]                  -> alvo "00 — Índice",  apelido nenhum
+ *   [[00 — Índice|Voltar]]           -> alvo "00 — Índice",  apelido "Voltar"
+ *   [[10 — Git\|10.7]]               -> alvo "10 — Git",     apelido "10.7"
+ *
+ * O terceiro caso e o pega-ratao: dentro de uma tabela Markdown a barra
+ * vertical separa colunas, entao ela precisa vir escapada como \| - e o
+ * parser tem que aceitar as duas formas.
+ */
+export function splitTarget(inner) {
+  const parts = inner.split(/\\\||\|/);
+  const target = parts[0].trim();
+  const alias = parts.length > 1 ? parts.slice(1).join('|').trim() : null;
+
+  return {
+    target,
+    alias,
+    display: alias || target,   // o texto que o usuario enxerga
+  };
+}
+
+/** Lista todos os wiki links do corpo da nota, com a linha onde aparecem. */
+export function extractWikiLinks(body) {
+  const links = [];
+
+  body.split('\n').forEach((line, i) => {
+    for (const match of line.matchAll(WIKILINK_RE)) {
+      const { target, alias, display } = splitTarget(match[1]);
+      if (!target) continue;
+
+      links.push({
+        target,                              // para onde aponta
+        alias,                               // apelido, se tiver
+        display,                             // o que aparece na tela
+        line: i,                             // em que linha estava
+        context: line.trim().slice(0, 160),  // o trecho ao redor (usado depois
+                                             // para montar os backlinks)
+      });
+    }
+  });
+
+  return links;
+}
