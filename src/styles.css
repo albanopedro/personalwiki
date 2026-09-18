@@ -310,3 +310,84 @@ body {
   text-underline-offset: 3px;
   cursor: help;
 }
+
+/* ---------- Grafo (Parte 16) ---------- */
+.nav-link {
+  display: block;
+  margin: 0 8px 10px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--text);
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.nav-link:hover { background: var(--border); }
+.nav-link.active { color: var(--accent); background: var(--accent-bg); border-color: var(--accent); }
+
+/* Ocupa da 2a coluna ate a ultima: nota + painel (ou so a nota, em tela estreita) */
+.graph-area { position: relative; grid-column: 2 / -1; overflow: hidden; }
+
+.graph {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;           /* o navegador nao tenta rolar a pagina enquanto voce arrasta */
+}
+.graph:active { cursor: grabbing; }
+
+.graph-edge { stroke: #454c59; }
+.graph-edge.lit { stroke: var(--accent); }
+
+.graph-node { cursor: pointer; }
+.graph-node circle { stroke: var(--bg); stroke-width: 1.5; }
+.graph-node text {
+  font-size: 11px;
+  fill: var(--muted);
+  /* contorno da cor do fundo por tras das letras: o nome continua legivel
+     mesmo quando cruza uma linha ou encosta no nome de outra nota */
+  stroke: var(--bg);
+  stroke-width: 3px;
+  paint-order: stroke;
+  text-anchor: middle;          /* nome centralizado embaixo da bolinha */
+  pointer-events: none;
+  user-select: none;
+}
+.graph-node.hovered text { fill: var(--text); font-weight: 600; }
+
+/* Com o mouse numa nota, o resto apaga e as ligacoes dela acendem */
+.graph .dim { opacity: 0.15; }
+
+.graph-toolbar {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+  pointer-events: none;         /* arrastar por cima do texto continua movendo o grafo */
+}
+.graph-toolbar label { display: flex; gap: 6px; align-items: center; pointer-events: auto; cursor: pointer; }
+
+.graph-legend {
+  position: absolute;
+  bottom: 14px;
+  left: 18px;
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.graph-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  background: var(--c);         /* a cor vem de cada <span>, pelo style */
+  border-radius: 50%;
+}

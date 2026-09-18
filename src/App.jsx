@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar.jsx';
 import NoteView from './components/NoteView.jsx';
 import Outline from './components/Outline.jsx';
 import Backlinks from './components/Backlinks.jsx';
+import GraphView from './components/GraphView.jsx';
 import { renderMarkdown, sectionAt } from './utils/markdown.js';
 import { toKey } from '../server/parser.js';
 
@@ -11,6 +12,7 @@ export default function App() {
   const [notes, setNotes] = useState([]);    // a lista do menu lateral
   const [note, setNote] = useState(null);    // a nota aberta (null = nenhuma)
   const [error, setError] = useState(null);  // mensagem de erro, se houver
+  const [indexVersion, setIndexVersion] = useState(null);   // a versao do indice que o servidor anunciou (Parte 15)
 
   // Parte 11: o ENDERECO passou a dizer qual nota esta aberta e em que secao.
   //
@@ -20,6 +22,7 @@ export default function App() {
   const noteId = notePath ? `${notePath}.md`.normalize('NFC') : null;
   const location = useLocation();
   const navigate = useNavigate();
+  const onGraph = location.pathname === '/grafo';   // Parte 16
   const articleRef = useRef(null);   // o <article> da nota, para achar os titulos na hora de rolar
 
   // A "lista telefonica" da Parte 4, agora tambem no navegador: nome da
@@ -34,7 +37,19 @@ export default function App() {
     return renderMarkdown(note.body, (name) => byName.get(toKey(name)) ?? null);
   }, [note, byName]);
 
-  // Roda UMA vez, quando a tela aparece: pede a lista de notas para a API.
+  // Fica ouvindo o servidor: ele avisa quando voce edita uma nota no
+  // Obsidian (Parte 15). O EventSource e o jeito do navegador de ouvir uma
+  // rota de Server-Sent Events - e se a conexao cair (a API reiniciou, o
+  // Mac dormiu), ele reconecta sozinho.
+  useEffect(() => {
+    const events = new EventSource('/api/events');
+    events.onmessage = (message) => setIndexVersion(JSON.parse(message.data).builtAt);
+    return () => events.close();   // a tela sumiu: para de ouvir
+  }, []);
+
+  // Pede a lista de notas para a API: quando a tela aparece e, desde a
+  // Parte 15, de novo a cada versao nova do indice (uma nota foi criada,
+  // apagada ou mudou de backlinks).
   useEffect(() => {
     async function loadNotes() {
       const res = await fetch('/api/notes');
@@ -45,9 +60,11 @@ export default function App() {
       setNotes(await res.json());
     }
     loadNotes();
-  }, []);
+  }, [indexVersion]);
 
-  // Sempre que o endereco aponta para outra nota, busca essa nota.
+  // Busca a nota do endereco: quando o endereco aponta para outra nota e,
+  // desde a Parte 15, quando o indice muda (voce pode ter editado ESTA nota,
+  // ou outra nota pode ter passado a apontar para ela - backlinks).
   useEffect(() => {
     if (!noteId) {
       setNote(null);
@@ -68,14 +85,21 @@ export default function App() {
     }
     loadNote();
     return () => { cancelled = true; };
-  }, [noteId]);
+  }, [noteId, indexVersion]);
 
   // Rola ate a secao que o endereco pede.  (Partes 10, 11 e 12)
   // O location.key muda a CADA navegacao, ate quando o endereco e o mesmo:
   // e isso que faz clicar de novo no mesmo titulo do sumario funcionar.
+  const scrolledFor = useRef(null);   // a ultima navegacao (location.key) que ja rolou  (Parte 15)
   useEffect(() => {
     // a nota do endereco ainda nao chegou da API: espera o proximo desenho
     if (!rendered || note.id !== noteId || !articleRef.current) return;
+
+    // A nota foi so ATUALIZADA (voce editou no Obsidian), mas voce nao
+    // navegou: o location.key e o mesmo da ultima rolagem. Nao rola - voce
+    // continua lendo exatamente onde estava.  (Parte 15)
+    if (scrolledFor.current === location.key) return;
+    scrolledFor.current = location.key;
 
     // A busca e os backlinks mandam uma LINHA, no "?linha=412" do endereco;
     // o sumario e o endereco recarregado mandam uma SECAO, no "#hash".
@@ -95,19 +119,24 @@ export default function App() {
     }
   }, [rendered, location.key]);
 
-
-
   return (
     <div className="app">
       {/* Parte 12: menu, busca, sumario e backlinks agora sao <Link>. Nenhum
           deles precisa mais receber uma funcao para abrir nota: cada link ja
           sabe o seu endereco. */}
       <Sidebar notes={notes} selectedId={note?.id} error={error} />
-      <NoteView note={note} rendered={rendered} articleRef={articleRef} />
-      <aside className="panel">
-        <Outline headings={rendered?.headings ?? []} />
-        <Backlinks note={note} />
-      </aside>
+      {/* No /grafo, o grafo ocupa o lugar da nota E do painel da direita (Parte 16) */}
+      {onGraph ? (
+        <GraphView indexVersion={indexVersion} />
+      ) : (
+        <>
+          <NoteView note={note} rendered={rendered} articleRef={articleRef} />
+          <aside className="panel">
+            <Outline headings={rendered?.headings ?? []} />
+            <Backlinks note={note} />
+          </aside>
+        </>
+      )}
     </div>
   );
 }

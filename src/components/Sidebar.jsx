@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, NavLink } from 'react-router';
 import SearchResults from './SearchResults.jsx';
 import { noteUrl } from '../utils/routes.js';
 
@@ -12,6 +12,10 @@ export default function Sidebar({ notes, selectedId, error }) {
   return (
     <aside className="sidebar">
       <h1>Personal Wiki</h1>
+
+      {/* NavLink e um Link que sabe se aponta para o endereco atual: quando voce
+          esta no /grafo, ele ganha sozinho a classe "active".  (Parte 16) */}
+      <NavLink to="/grafo" className="nav-link">Grafo</NavLink>
 
       {/* Campo "controlado": o valor mora no estado query, e cada tecla
           atualiza o estado. E assim que a busca fica sabendo o que foi digitado. */}

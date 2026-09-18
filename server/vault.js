@@ -49,7 +49,12 @@ export function buildIndex() {
 
   for (const fullPath of findNoteFiles(config.vaultPath)) {
     const id = path.relative(config.vaultPath, fullPath).normalize('NFC');
-    const raw = fs.readFileSync(fullPath, 'utf8');
+    let raw;
+    try {
+      raw = fs.readFileSync(fullPath, 'utf8');
+    } catch {
+      continue;   // o arquivo sumiu entre listar e ler: renomeado ou apagado agora mesmo (Parte 15)
+    }
     const { data, body } = parseFrontmatter(raw);
 
     notes.set(id, {
@@ -93,5 +98,36 @@ export function buildIndex() {
     }
   }
 
-  return { notes, byName, backlinks, broken };
+  // builtAt: o momento em que este indice foi montado. Funciona como o
+  // "numero da versao" do indice: se mudou, alguma nota mudou.  (Parte 15)
+  return { notes, byName, backlinks, broken, builtAt: Date.now() };
+}
+
+/**
+ * Fica de olho no vault e chama onChange quando alguma nota muda.  (Parte 15)
+ *
+ * O fs.watch e do proprio Node: o macOS avisa a cada arquivo criado,
+ * alterado, renomeado ou apagado, em todas as subpastas (recursive).
+ *
+ * Um "salvar" do Obsidian pode gerar varios avisos seguidos (e o Obsidian
+ * salva sozinho enquanto voce digita). Entao os avisos sao juntados: so
+ * depois de 300ms sem nenhum aviso novo e que o onChange e chamado, com a
+ * lista de arquivos que mudaram. Uma rajada de avisos, uma reconstrucao.
+ */
+export function watchVault(onChange) {
+  const changed = new Set();
+  let timer = null;
+
+  fs.watch(config.vaultPath, { recursive: true }, (event, filename) => {
+    if (!filename || !filename.endsWith('.md')) return;                     // so notas
+    if (filename.split(path.sep).some((part) => IGNORED.includes(part))) return;   // nada da .obsidian
+
+    changed.add(filename.normalize('NFC'));
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      const files = [...changed];
+      changed.clear();
+      onChange(files);
+    }, 300);
+  });
 }

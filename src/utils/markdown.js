@@ -4,10 +4,54 @@ import MarkdownIt from 'markdown-it';
 import { splitTarget } from '../../server/parser.js';
 import { noteUrl } from './routes.js';
 
+// ---------------------------------------------------------------------------
+// Cores no codigo  (Parte 14)
+// ---------------------------------------------------------------------------
+// O highlight.js conhece 193 linguagens. O "lib/core" vem sem nenhuma, e a
+// gente registra so as que aparecem no seu vault (medido na Parte 14 -
+// inclusive lua e yaml, que estao em blocos dentro de callouts): o
+// site fica bem mais leve do que carregando todas. Se um dia voce escrever
+// um bloco de outra linguagem, e so importar e registrar ela aqui.
+import hljs from 'highlight.js/lib/core';
+import bash from 'highlight.js/lib/languages/bash';
+import css from 'highlight.js/lib/languages/css';
+import javascript from 'highlight.js/lib/languages/javascript';   // cobre o jsx tambem
+import json from 'highlight.js/lib/languages/json';
+import less from 'highlight.js/lib/languages/less';
+import lua from 'highlight.js/lib/languages/lua';
+import makefile from 'highlight.js/lib/languages/makefile';
+import python from 'highlight.js/lib/languages/python';
+import scss from 'highlight.js/lib/languages/scss';
+import sql from 'highlight.js/lib/languages/sql';
+import typescript from 'highlight.js/lib/languages/typescript';
+import xml from 'highlight.js/lib/languages/xml';                 // cobre o html tambem
+import yaml from 'highlight.js/lib/languages/yaml';
+
+const LANGUAGES = { bash, css, javascript, json, less, lua, makefile, python, scss, sql, typescript, xml, yaml };
+for (const [name, language] of Object.entries(LANGUAGES)) {
+  hljs.registerLanguage(name, language);
+}
+
+/**
+ * Pinta um bloco de codigo. O markdown-it chama isto para cada bloco, com o
+ * texto do bloco e a linguagem escrita depois das crases (```python).
+ *
+ * Devolver '' quer dizer "nao pintei": o markdown-it mostra o codigo sem
+ * cores. E o que acontece com bloco sem linguagem e com linguagem que nao
+ * registramos (o mermaid, por exemplo) - igual ao Obsidian.
+ */
+function highlightCode(code, lang) {
+  if (!lang || !hljs.getLanguage(lang)) return '';
+  // ignoreIllegals: codigo "estranho" (como os colados sem quebra de linha da
+  // resumo fases luri) e pintado do jeito que der, em vez de dar erro
+  return hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
+}
+
 const md = new MarkdownIt({
   html: false,     // HTML escrito dentro da nota aparece como TEXTO, nunca e executado
   linkify: true,   // um https://... solto no texto vira link clicavel
   breaks: true,    // uma quebra de linha vira quebra de linha, igual ao seu Obsidian
+  highlight: highlightCode,   // cores nos blocos de codigo (Parte 14)
 });
 
 // ---------------------------------------------------------------------------
