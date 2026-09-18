@@ -108,7 +108,11 @@ export function extractWikiLinks(body) {
   const links = [];
 
   body.split('\n').forEach((line, i) => {
-    for (const match of line.matchAll(WIKILINK_RE)) {
+    // Trecho entre crases e codigo, nao link: em `[[exemplo]]` o autor so
+    // esta mostrando a sintaxe. Apaga esses trechos antes de procurar.
+    const withoutCode = line.replace(/`[^`]*`/g, '');
+
+    for (const match of withoutCode.matchAll(WIKILINK_RE)) {
       const { target, alias, display } = splitTarget(match[1]);
       if (!target) continue;
 

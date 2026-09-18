@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "vite",
     "teste": "node server/teste.js",
-    "indice": "node server/teste-indice.js"
+    "indice": "node server/teste-indice.js",
+    "api": "node --watch server/index.js"
   },
   "dependencies": {
+    "express": "^5.2.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
