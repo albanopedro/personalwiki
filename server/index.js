@@ -7,6 +7,7 @@
 import express from 'express';
 import { config } from '../config.js';
 import { buildIndex, toKey } from './vault.js';
+import { search } from './search.js';
 
 // O indice e montado UMA vez, quando o servidor liga.
 // Todas as perguntas depois disso sao respondidas direto da memoria.
@@ -64,6 +65,11 @@ app.get('/api/resolve', (req, res) => {
     return res.status(404).json({ error: `Nenhuma nota chamada "${name}"` });
   }
   res.json({ id });
+});
+
+// Pergunta 4: "onde aparece este texto?"  (Parte 9)
+app.get('/api/search', (req, res) => {
+  res.json(search(index, String(req.query.q ?? '')));
 });
 
 app.listen(config.apiPort, () => {
