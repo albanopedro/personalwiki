@@ -1,27 +1,7 @@
-import { useEffect, useRef } from 'react';
-import { sectionAt } from '../utils/markdown.js';
-
 // Area principal: mostra a nota aberta, ja formatada.
-export default function NoteView({ note, rendered, jump, onOpenLink }) {
-  // Os hooks (useRef, useEffect) ficam ANTES do "if (!note) return" la embaixo:
-  // o React exige que eles rodem sempre, na mesma ordem, em todo desenho.
-  const articleRef = useRef(null);   // aponta para o <article> de verdade na pagina
-
-  // Rola ate o titulo pedido.  (Parte 10)
-  // Roda DEPOIS que o React colocou o HTML na tela - antes disso, o titulo
-  // ainda nao existe para ser encontrado.
-  useEffect(() => {
-    if (!jump || !rendered || !articleRef.current) return;
-
-    // Pedido do sumario: ja vem o slug. Pedido da busca ou de um backlink:
-    // vem uma linha, e o titulo e o ultimo que aparece antes dela.
-    const slug = jump.slug ?? sectionAt(rendered.headings, jump.line);
-    const target = slug && articleRef.current.querySelector(`#${CSS.escape(slug)}`);
-
-    if (target) target.scrollIntoView({ block: 'start' });
-    else articleRef.current.parentElement.scrollTop = 0;   // linha antes do 1o titulo: topo
-  }, [jump, rendered]);
-
+// Parte 11: a rolagem ate a secao foi para o App, que e quem le o endereco.
+// A NoteView so desenha; o articleRef vem do App e aponta para o <article>.
+export default function NoteView({ note, rendered, articleRef, onOpenLink }) {
   if (!note) {
     return (
       <main className="note-view">
