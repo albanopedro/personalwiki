@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { cleanContext } from '../utils/cleanContext.js';
+import { headingText } from '../utils/markdown.js';
 
 // Resultados da busca, no lugar da lista de notas.  (Parte 9)
 export default function SearchResults({ query, selectedId, onSelect }) {
@@ -33,25 +34,23 @@ export default function SearchResults({ query, selectedId, onSelect }) {
       <p className="search-info">{data.total} nota(s)</p>
       <ul>
         {data.results.map((r) => (
-          <li key={r.id}>
-            <button
-              className={r.id === selectedId ? 'result active' : 'result'}
-              onClick={() => onSelect(r.id)}
-            >
-              <span className="result-name">{r.name}</span>
-
-              {r.hits.map((h) => (
-                <span key={h.line} className="result-hit">
-                  {h.section && <span className="result-section">{h.section}</span>}
-                  {/* se o que casou foi o proprio titulo, ele ja apareceu na linha de cima */}
-                  {!h.isHeading && <span className="result-text">{cleanContext(h.text)}</span>}
-                </span>
-              ))}
-
-              {r.lineHits > r.hits.length && (
-                <span className="result-more">+ {r.lineHits - r.hits.length} ocorrência(s)</span>
-              )}
+          <li key={r.id} className={r.id === selectedId ? 'result active' : 'result'}>
+            {/* O nome abre a nota no topo; cada trecho abre na secao dele  (Parte 10) */}
+            <button className="result-name" onClick={() => onSelect(r.id)}>
+              {r.name}
             </button>
+
+            {r.hits.map((h) => (
+              <button key={h.line} className="result-hit" onClick={() => onSelect(r.id, h.line)}>
+                {h.section && <span className="result-section">{headingText(h.section)}</span>}
+                {/* se o que casou foi o proprio titulo, ele ja apareceu na linha de cima */}
+                {!h.isHeading && <span className="result-text">{cleanContext(h.text)}</span>}
+              </button>
+            ))}
+
+            {r.lineHits > r.hits.length && (
+              <span className="result-more">+ {r.lineHits - r.hits.length} ocorrência(s)</span>
+            )}
           </li>
         ))}
       </ul>

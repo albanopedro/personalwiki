@@ -61,7 +61,9 @@ function snippet(line, matcher) {
 }
 
 const FENCE = /^\s{0,3}(```|~~~)/;   // abre ou fecha bloco de codigo (ate 3 espacos, regra do Markdown)
-const HEADING = /^#{1,6}\s+(.+)$/;    // # Titulo, ## Titulo, ...
+// # Titulo, ## Titulo... O \s* aceita titulo recuado (dentro de uma lista), como o
+// markdown-it aceita. Sem ele, servidor e tela discordavam em 27 linhas.  (Parte 10)
+const HEADING = /^\s*#{1,6}\s+(.+)$/;
 
 export function search(index, query) {
   const terms = parseQuery(query);

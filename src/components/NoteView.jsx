@@ -1,7 +1,27 @@
-import { renderMarkdown } from '../utils/markdown.js';
+import { useEffect, useRef } from 'react';
+import { sectionAt } from '../utils/markdown.js';
 
 // Area principal: mostra a nota aberta, ja formatada.
-export default function NoteView({ note, onOpenLink }) {
+export default function NoteView({ note, rendered, jump, onOpenLink }) {
+  // Os hooks (useRef, useEffect) ficam ANTES do "if (!note) return" la embaixo:
+  // o React exige que eles rodem sempre, na mesma ordem, em todo desenho.
+  const articleRef = useRef(null);   // aponta para o <article> de verdade na pagina
+
+  // Rola ate o titulo pedido.  (Parte 10)
+  // Roda DEPOIS que o React colocou o HTML na tela - antes disso, o titulo
+  // ainda nao existe para ser encontrado.
+  useEffect(() => {
+    if (!jump || !rendered || !articleRef.current) return;
+
+    // Pedido do sumario: ja vem o slug. Pedido da busca ou de um backlink:
+    // vem uma linha, e o titulo e o ultimo que aparece antes dela.
+    const slug = jump.slug ?? sectionAt(rendered.headings, jump.line);
+    const target = slug && articleRef.current.querySelector(`#${CSS.escape(slug)}`);
+
+    if (target) target.scrollIntoView({ block: 'start' });
+    else articleRef.current.parentElement.scrollTop = 0;   // linha antes do 1o titulo: topo
+  }, [jump, rendered]);
+
   if (!note) {
     return (
       <main className="note-view">
@@ -9,8 +29,6 @@ export default function NoteView({ note, onOpenLink }) {
       </main>
     );
   }
-
-  const html = renderMarkdown(note.body);
 
   // Os links vieram prontos do markdown-it, entao o React nao colocou
   // onClick em nenhum deles. Em vez de um ouvinte por link, fica UM so no
@@ -40,7 +58,12 @@ export default function NoteView({ note, onOpenLink }) {
       {/* "dangerously" e um aviso do proprio React: voce esta colocando HTML
           pronto na tela, e se esse HTML tivesse codigo malicioso, ele rodaria.
           Aqui e seguro porque o markdown-it esta com html: false. */}
-      <article className="markdown" onClick={handleClick} dangerouslySetInnerHTML={{ __html: html }} />
+      <article
+        ref={articleRef}
+        className="markdown"
+        onClick={handleClick}
+        dangerouslySetInnerHTML={{ __html: rendered.html }}
+      />
     </main>
   );
 }
