@@ -391,3 +391,112 @@ body {
   background: var(--c);         /* a cor vem de cada <span>, pelo style */
   border-radius: 50%;
 }
+
+/* ---------- Editor (Parte 17) ---------- */
+.note-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+
+.edit-button, .editor-actions button, .editor-blocked button {
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.edit-button:hover, .editor-actions button:hover:not(:disabled),
+.editor-blocked button:hover { border-color: var(--accent); color: var(--accent); }
+.editor-actions button:disabled { opacity: .45; cursor: default; }
+.editor-actions .primary, .editor-blocked .primary { color: #fff; background: var(--accent); border-color: var(--accent); }
+.editor-actions .primary:hover:not(:disabled), .editor-blocked .primary:hover { color: #fff; filter: brightness(1.1); }
+
+/* O editor ocupa a coluna inteira: a barra em cima, o texto preenchendo o resto */
+.note-view.editor { display: flex; flex-direction: column; overflow: hidden; }
+.editor-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.editor-file { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.editor-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.editor-dirty { font-size: 12px; color: #f0a92f; }   /* o mesmo amarelo dos callouts de aviso */
+
+.editor-text {
+  flex: 1;
+  min-height: 0;              /* sem isso, o textarea nao encolhe dentro do flex */
+  width: 100%;
+  padding: 14px 16px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  resize: none;
+  tab-size: 2;
+}
+.editor-text:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+.note-view.editor .markdown { flex: 1; min-height: 0; overflow-y: auto; }
+
+.editor-erro, .editor-ok { margin: 0 0 12px; font-size: 13px; }
+.editor-erro { color: #e5484d; }   /* o mesmo vermelho dos callouts de erro */
+.editor-ok { color: var(--muted); }
+
+/* Barra que aparece quando a navegacao e segurada por causa de alteracao nao salva */
+.editor-blocked {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  background: var(--bg-soft);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+}
+.editor-blocked span { margin-right: auto; }
+
+/* ---------- Nota nova (Parte 18) ---------- */
+.nav-button { width: calc(100% - 16px); text-align: left; font: inherit; font-size: 13px; cursor: pointer; }
+
+.new-note {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 8px 10px;
+  padding: 10px;
+  background: var(--bg-soft);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+}
+.new-note-name, .new-note-folder {
+  width: 100%;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.new-note-name:focus, .new-note-folder:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.new-note-actions { display: flex; gap: 8px; }
+.new-note-actions button {
+  flex: 1;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+}
+.new-note-actions .primary { color: #fff; background: var(--accent); border-color: var(--accent); }
+.new-note-actions button:disabled { opacity: .45; cursor: default; }
+.new-note-erro { margin: 0; font-size: 12px; color: #e5484d; }
