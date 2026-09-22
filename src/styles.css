@@ -500,3 +500,33 @@ body {
 .new-note-actions .primary { color: #fff; background: var(--accent); border-color: var(--accent); }
 .new-note-actions button:disabled { opacity: .45; cursor: default; }
 .new-note-erro { margin: 0; font-size: 12px; color: #e5484d; }
+
+/* ---------- Caixinhas de tarefa (Parte 19) ---------- */
+.markdown li.task {
+  list-style: none;      /* a caixinha substitui a bolinha da lista */
+  margin-left: -1.3em;
+}
+.markdown .task-check {
+  margin-right: 8px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.markdown li.task.done { color: var(--muted); text-decoration: line-through; }
+
+/* Na previa do editor as caixinhas so mostram o estado: quem manda la e o texto */
+.note-view.editor .task-check { pointer-events: none; }
+
+/* O aviso gruda no topo da area visivel: a nota e longa, e o clique numa
+   tarefa pode acontecer bem longe do comeco dela. */
+.task-erro {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #e5484d;
+  background: var(--bg-soft);
+  border: 1px solid #e5484d;
+  border-radius: 6px;
+}

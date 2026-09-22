@@ -232,6 +232,52 @@ md.core.ruler.push('headings', (state) => {
   state.env.headings = headings;
 });
 
+// ---------------------------------------------------------------------------
+// Caixinhas de tarefa  (Parte 19)
+// ---------------------------------------------------------------------------
+
+// "[ ] " ou "[x] " logo no comeco do item da lista
+const TASK = /^\[([ xX])\]\s+/;
+
+/**
+ * Transforma "- [ ] estudar" numa caixinha de verdade.
+ *
+ * Esta regra roda DEPOIS da leitura do texto, entao cada item da lista ja
+ * virou peca. Para cada item, ela olha o primeiro pedaco de texto: se ele
+ * comeca com [ ] ou [x], tira esse pedaco e poe uma caixinha no lugar.
+ *
+ * O numero da linha (token.map, o mesmo da Parte 10) vai junto no HTML: e
+ * por ele que o clique sabe qual linha do arquivo marcar.
+ */
+md.core.ruler.push('tasks', (state) => {
+  if (state.inlineMode) return;
+
+  state.tokens.forEach((token, i) => {
+    if (token.type !== 'list_item_open') return;
+
+    // Num item simples, as pecas vem assim: item, paragrafo, TEXTO, ...
+    const inline = state.tokens[i + 2];
+    if (!inline || inline.type !== 'inline') return;
+
+    const first = inline.children[0];
+    if (!first || first.type !== 'text') return;
+    const match = TASK.exec(first.content);
+    if (!match) return;
+
+    const done = match[1] !== ' ';
+    first.content = first.content.slice(match[0].length);   // tira o "[ ] " do texto
+
+    // A caixinha e um pedaco de HTML que NOS criamos - nao veio da nota -,
+    // por isso e seguro mesmo com o html: false da Parte 7.
+    const box = new state.Token('html_inline', '', 0);
+    box.content = `<input class="task-check" type="checkbox"${done ? ' checked' : ''}> `;
+    inline.children.unshift(box);
+
+    token.attrJoin('class', done ? 'task done' : 'task');
+    if (token.map) token.attrSet('data-line', String(token.map[0]));
+  });
+});
+
 /**
  * Recebe o texto markdown e devolve o HTML pronto para a tela e a lista de
  * titulos (para o sumario). O "env" e um objeto que o markdown-it carrega
