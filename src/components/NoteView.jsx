@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import NoteEditor from './NoteEditor.jsx';
 import { toggleTaskLine } from '../utils/tasks.js';
+import { api, apiSend } from '../utils/api.js';
 
 // Area principal: mostra a nota aberta, ja formatada.
 // Parte 11: a rolagem ate a secao foi para o App, que e quem le o endereco.
@@ -67,26 +68,20 @@ export default function NoteView({ note, rendered, articleRef, resolveLink }) {
   async function alternarTarefa(item, box) {
     setTaskError(null);
 
-    // 1. O texto cru do arquivo e a data da ultima gravacao
-    const lido = await fetch(`/api/raw?id=${encodeURIComponent(note.id)}`);
-    if (!lido.ok) return desfazer(box, 'Não consegui ler a nota.');
-    const { raw, mtime } = await lido.json();
+    try {
+      // 1. O texto cru do arquivo e a data da ultima gravacao
+      const { raw, mtime } = await api(`/api/raw?id=${encodeURIComponent(note.id)}`);
 
-    // 2. Troca [ ] por [x] na linha certa - ou desiste, se algo nao bater
-    const novo = toggleTaskLine(raw, Number(item.dataset.line), item.textContent);
-    if (!novo) return desfazer(box, 'A nota mudou no disco. Recarregue a página.');
+      // 2. Troca [ ] por [x] na linha certa - ou desiste, se algo nao bater
+      const novo = toggleTaskLine(raw, Number(item.dataset.line), item.textContent);
+      if (!novo) return desfazer(box, 'A nota mudou no disco. Recarregue a página.');
 
-    // 3. Grava, com a mesma protecao contra escrever por cima de outra edicao
-    const gravou = await fetch('/api/note', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: note.id, raw: novo, mtime }),
-    });
-    if (!gravou.ok) {
-      const { error } = await gravou.json().catch(() => ({}));
-      desfazer(box, error ?? 'Não consegui salvar.');
+      // 3. Grava, com a mesma protecao contra escrever por cima de outra edicao
+      await apiSend('/api/note', 'PUT', { id: note.id, raw: novo, mtime });
+      // Deu certo: o aviso da Parte 15 chega logo em seguida e a nota se redesenha
+    } catch (err) {
+      desfazer(box, err.message);
     }
-    // Deu certo: o aviso da Parte 15 chega logo em seguida e a nota se redesenha
   }
 
   function desfazer(box, mensagem) {

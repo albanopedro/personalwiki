@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { noteUrl } from '../utils/routes.js';
+import { apiSend } from '../utils/api.js';
 
 // Formulario de nota nova, no menu lateral.  (Parte 18)
 export default function NewNoteForm({ folders, defaultFolder, onClose }) {
@@ -18,23 +19,16 @@ export default function NewNoteForm({ folders, defaultFolder, onClose }) {
 
     setCreating(true);
     setError(null);
-    const res = await fetch('/api/note', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, folder }),
-    });
-    setCreating(false);
-
-    if (!res.ok) {
-      const { error: motivo } = await res.json().catch(() => ({}));
-      setError(motivo ?? 'Não consegui criar a nota.');
-      return;
+    try {
+      const { id } = await apiSend('/api/note', 'POST', { name, folder });
+      onClose();
+      // O "?editar=1" abre a nota ja no editor, para voce comecar a escrever
+      navigate(`${noteUrl(id)}?editar=1`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCreating(false);
     }
-
-    const { id } = await res.json();
-    onClose();
-    // O "?editar=1" abre a nota ja no editor, para voce comecar a escrever
-    navigate(`${noteUrl(id)}?editar=1`);
   }
 
   return (

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useBlocker } from 'react-router';
 import { parseFrontmatter } from '../../server/parser.js';
 import { renderMarkdown } from '../utils/markdown.js';
+import { api, apiSend } from '../utils/api.js';
 
 // O editor de notas.  (Parte 17)
 //
@@ -21,8 +22,7 @@ export default function NoteEditor({ note, resolveLink, onClose }) {
   // 1. Ao abrir, busca o texto cru do arquivo (e o mtime que vai junto)
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/raw?id=${encodeURIComponent(note.id)}`)
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error('não consegui abrir o arquivo'))))
+    api(`/api/raw?id=${encodeURIComponent(note.id)}`)
       .then((data) => {
         if (cancelled) return;
         setDraft(data.raw);
@@ -52,25 +52,19 @@ export default function NoteEditor({ note, resolveLink, onClose }) {
     setSaving(true);
     setMessage(null);
 
-    const res = await fetch('/api/note', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: note.id, raw: draft, mtime }),
-    });
-    setSaving(false);
+    try {
+      const salvo = await apiSend('/api/note', 'PUT', { id: note.id, raw: draft, mtime });
 
-    if (!res.ok) {
-      const { error } = await res.json().catch(() => ({}));
-      setMessage({ tipo: 'erro', texto: error ?? 'Não consegui salvar.' });
-      return;
+      // Guarda o mtime NOVO: sem isso, o segundo salvo seguido seria recusado
+      // como se outra pessoa tivesse mexido no arquivo.
+      setMtime(salvo.mtime);
+      setSaved(draft);
+      setMessage({ tipo: 'ok', texto: 'Salvo no vault.' });
+    } catch (err) {
+      setMessage({ tipo: 'erro', texto: err.message });
+    } finally {
+      setSaving(false);
     }
-
-    // Guarda o mtime NOVO: sem isso, o segundo salvo seguido seria recusado
-    // como se outra pessoa tivesse mexido no arquivo.
-    const { mtime: agora } = await res.json();
-    setMtime(agora);
-    setSaved(draft);
-    setMessage({ tipo: 'ok', texto: 'Salvo no vault.' });
   }
 
   // Cmd+S (ou Ctrl+S) salva, como em qualquer editor

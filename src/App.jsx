@@ -7,11 +7,16 @@ import Backlinks from './components/Backlinks.jsx';
 import GraphView from './components/GraphView.jsx';
 import { renderMarkdown, sectionAt } from './utils/markdown.js';
 import { toKey } from '../server/parser.js';
+import { api } from './utils/api.js';
 
 export default function App() {
   const [notes, setNotes] = useState([]);    // a lista do menu lateral
   const [note, setNote] = useState(null);    // a nota aberta (null = nenhuma)
-  const [error, setError] = useState(null);  // mensagem de erro, se houver
+  // Dois erros separados: cada efeito cuida do seu e limpa o seu quando da
+  // certo. Com um so, a lista voltando apagaria o "nota nao encontrada" - e
+  // uma mensagem velha ficava na tela depois que a API voltava.  (Parte 20)
+  const [listError, setListError] = useState(null);
+  const [noteError, setNoteError] = useState(null);
   const [indexVersion, setIndexVersion] = useState(null);   // a versao do indice que o servidor anunciou (Parte 15)
 
   // Parte 11: o ENDERECO passou a dizer qual nota esta aberta e em que secao.
@@ -46,9 +51,39 @@ export default function App() {
   // rota de Server-Sent Events - e se a conexao cair (a API reiniciou, o
   // Mac dormiu), ele reconecta sozinho.
   useEffect(() => {
-    const events = new EventSource('/api/events');
-    events.onmessage = (message) => setIndexVersion(JSON.parse(message.data).builtAt);
-    return () => events.close();   // a tela sumiu: para de ouvir
+    let events;
+    let retry;
+    let vigia;
+
+    function ouvir() {
+      events = new EventSource('/api/events');
+
+      // Vigia do sinal de vida: se nada chegar por 25 segundos, a conexao
+      // morreu sem avisar - a API caiu e o Vite segurou a conexao aberta,
+      // entao nenhum erro dispara. Aqui a gente fecha e tenta de novo.
+      const reiniciarVigia = () => {
+        clearTimeout(vigia);
+        vigia = setTimeout(() => { events.close(); ouvir(); }, 25000);
+      };
+
+      events.onopen = reiniciarVigia;
+      events.onmessage = (message) => {
+        reiniciarVigia();
+        setIndexVersion(JSON.parse(message.data).builtAt);
+      };
+
+      // E quando o erro chega de verdade (a API respondeu com erro, que e o
+      // que o Vite manda enquanto ela esta desligada), tenta de novo a cada
+      // 3 segundos ate ela voltar.  (Parte 20)
+      events.onerror = () => {
+        events.close();
+        clearTimeout(vigia);
+        retry = setTimeout(ouvir, 3000);
+      };
+    }
+
+    ouvir();
+    return () => { events?.close(); clearTimeout(retry); clearTimeout(vigia); };   // a tela sumiu
   }, []);
 
   // Pede a lista de notas para a API: quando a tela aparece e, desde a
@@ -56,12 +91,12 @@ export default function App() {
   // apagada ou mudou de backlinks).
   useEffect(() => {
     async function loadNotes() {
-      const res = await fetch('/api/notes');
-      if (!res.ok) {
-        setError('A API não respondeu. Ela está rodando? (npm run api)');
-        return;
+      try {
+        setNotes(await api('/api/notes'));
+        setListError(null);
+      } catch (err) {
+        setListError(err.message);
       }
-      setNotes(await res.json());
     }
     loadNotes();
   }, [indexVersion]);
@@ -72,20 +107,22 @@ export default function App() {
   useEffect(() => {
     if (!noteId) {
       setNote(null);
+      setNoteError(null);
       return;
     }
     let cancelled = false;
     async function loadNote() {
-      // encodeURIComponent protege espacos, acentos e barras do id
-      const res = await fetch(`/api/note?id=${encodeURIComponent(noteId)}`);
-      if (cancelled) return;          // o endereco ja mudou de novo: resposta velha
-      if (!res.ok) {
-        setError(`Nota não encontrada: ${noteId}`);
+      try {
+        // encodeURIComponent protege espacos, acentos e barras do id
+        const nota = await api(`/api/note?id=${encodeURIComponent(noteId)}`);
+        if (cancelled) return;        // o endereco ja mudou de novo: resposta velha
+        setNoteError(null);
+        setNote(nota);
+      } catch (err) {
+        if (cancelled) return;
+        setNoteError(err.message);
         setNote(null);
-        return;
       }
-      setError(null);
-      setNote(await res.json());
     }
     loadNote();
     return () => { cancelled = true; };
@@ -128,7 +165,12 @@ export default function App() {
       {/* Parte 12: menu, busca, sumario e backlinks agora sao <Link>. Nenhum
           deles precisa mais receber uma funcao para abrir nota: cada link ja
           sabe o seu endereco. */}
-      <Sidebar notes={notes} selectedId={note?.id} error={error} />
+      <Sidebar
+        notes={notes}
+        selectedId={note?.id}
+        error={listError ?? noteError}
+        indexVersion={indexVersion}
+      />
       {/* No /grafo, o grafo ocupa o lugar da nota E do painel da direita (Parte 16) */}
       {onGraph ? (
         <GraphView indexVersion={indexVersion} />

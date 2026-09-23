@@ -107,13 +107,13 @@ app.get('/api/note', (req, res) => {
 });
 
 // Pergunta 3: "onde aparece este texto?"  (Parte 9)
-// (A antiga pergunta 3, /api/resolve, saiu na Parte 13: o navegador
+// (Uma rota /api/resolve existiu aqui ate a Parte 13, quando o navegador
 // passou a traduzir os [[links]] sozinho, na hora de desenhar.)
 app.get('/api/search', (req, res) => {
   res.json(search(index, String(req.query.q ?? '')));
 });
 
-// Pergunta 5: "como as notas se ligam?"  (Parte 16)
+// Pergunta 4: "como as notas se ligam?"  (Parte 16)
 // Tudo que o grafo precisa, de uma vez so: as notas (os nos) e os pares de
 // notas ligadas (as arestas). As arestas saem dos backlinks, que o indice ja
 // resolveu na Parte 4 - nenhum nome precisa ser traduzido de novo aqui.
@@ -149,7 +149,7 @@ app.get('/api/graph', (req, res) => {
   res.json({ nodes, edges: [...pairs.values()] });
 });
 
-// Pergunta 6: "me da o texto CRU da nota"  (Parte 17)
+// Pergunta 5: "me da o texto CRU da nota"  (Parte 17)
 //
 // O editor precisa do arquivo inteiro, inclusive o frontmatter - que o
 // indice guarda separado desde a Parte 3. Se o editor salvasse so o corpo,
@@ -173,7 +173,7 @@ app.get('/api/raw', (req, res) => {
   }
 });
 
-// Pergunta 7: "guarda este texto na nota X"  (Parte 17)
+// Pergunta 6: "guarda este texto na nota X"  (Parte 17)
 //
 // A UNICA rota do wiki que escreve no seu vault.
 app.put('/api/note', (req, res) => {
@@ -218,7 +218,7 @@ app.put('/api/note', (req, res) => {
   }
 });
 
-// Pergunta 8: "cria uma nota nova com este nome"  (Parte 18)
+// Pergunta 7: "cria uma nota nova com este nome"  (Parte 18)
 //
 // A segunda rota que escreve no vault - e a unica que cria arquivo. O nome
 // vem digitado por voce, entao ele passa por uma peneira antes de virar um
@@ -272,7 +272,7 @@ app.post('/api/note', (req, res) => {
   res.status(201).json({ id });
 });
 
-// Pergunta 4: "me avisa quando o vault mudar"  (Parte 15)
+// Pergunta 8: "me avisa quando o vault mudar"  (Parte 15)
 //
 // Server-Sent Events. Em todas as outras rotas, o navegador pergunta e o
 // servidor responde uma vez. Aqui, a resposta NUNCA TERMINA: o navegador
@@ -291,12 +291,27 @@ app.get('/api/events', (req, res) => {
   res.flushHeaders();                      // manda o cabecalho ja, sem esperar o "fim"
   sendVersion(res);
   listeners.add(res);
-  req.on('close', () => listeners.delete(res));   // a aba fechou: para de avisar
+
+  // Sinal de vida a cada 10 segundos.  (Parte 20)
+  // Sem ele, uma aba nao tem como perceber que a API morreu: o Vite, no meio
+  // do caminho, mantem a conexao aberta, e o navegador continua achando que
+  // esta ouvindo. Reenviar a versao atual e inofensivo - se ela nao mudou, a
+  // tela nem redesenha - e serve de batida do coracao.
+  const heartbeat = setInterval(() => sendVersion(res), 10000);
+
+  req.on('close', () => {                  // a aba fechou: para de avisar
+    clearInterval(heartbeat);
+    listeners.delete(res);
+  });
 });
 
 // Quando uma nota muda no disco: refaz o indice inteiro e avisa todo mundo.
 watchVault((files) => rebuildIndex(`Vault mudou: ${files.join(', ')}`));
 
-app.listen(config.apiPort, () => {
+// O '127.0.0.1' e o proprio computador, e so ele. Sem isso, o Node abre a
+// API para TODAS as interfaces de rede: na rede da faculdade ou de um cafe,
+// outro aparelho conseguiria ler - e, desde a Parte 17, gravar - no seu
+// vault, porque estas rotas nao pedem senha nenhuma.  (Parte 20)
+app.listen(config.apiPort, '127.0.0.1', () => {
   console.log(`API rodando em http://localhost:${config.apiPort}`);
 });

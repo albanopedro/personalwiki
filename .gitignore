@@ -1,0 +1,17 @@
+# Dependencias: sao reinstaladas com "npm install", nao vao para o Git.
+# (123 pastas, dezenas de MB — e elas ja estao descritas no package.json)
+node_modules/
+
+# Configuracao do Claude Code (o atalho que liga o servidor de desenvolvimento).
+# E ferramenta de quem edita o projeto, nao parte do wiki.
+.claude/
+
+# Lixo do Finder e de editores
+.DS_Store
+*.swp
+
+# Pasta gerada por "npm run build", se um dia voce publicar o wiki
+dist/
+
+# Arquivos temporarios do editor de notas, se algum sobrar (Parte 17)
+*.md.tmp

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { forceCollide, forceLink, forceManyBody, forceSimulation, forceX, forceY } from 'd3-force';
 import { noteUrl } from '../utils/routes.js';
+import { api } from '../utils/api.js';
 
 // O grafo das notas.  (Parte 16)
 //
@@ -34,15 +35,16 @@ export default function GraphView({ indexVersion }) {
   const sizeRef = useRef(size);                              // o mesmo, para o ouvinte da roda do mouse
   const [hovered, setHovered] = useState(null);              // id da nota sob o mouse
   const [hideIsolated, setHideIsolated] = useState(false);
+  const [error, setError] = useState(null);                  // Parte 20
   const [, setFrame] = useState(0);                          // so serve para redesenhar a cada passo da fisica
 
   // 1. Busca o grafo. De novo a cada versao do indice: se voce criar um link
   //    no Obsidian, a linha nova aparece aqui (Parte 15).
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/graph')
-      .then((res) => res.json())
-      .then((data) => { if (!cancelled) setGraph(data); });
+    api('/api/graph')
+      .then((data) => { if (!cancelled) setGraph(data); })
+      .catch((err) => { if (!cancelled) setError(err.message); });
     return () => { cancelled = true; };
   }, [indexVersion]);
 
@@ -211,6 +213,7 @@ export default function GraphView({ indexVersion }) {
 
   return (
     <div className="graph-area">
+      {error && <p className="graph-erro">{error}</p>}
       <svg
         ref={svgRef}
         className="graph"

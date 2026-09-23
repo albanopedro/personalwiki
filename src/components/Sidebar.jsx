@@ -5,7 +5,7 @@ import NewNoteForm from './NewNoteForm.jsx';
 import { noteUrl } from '../utils/routes.js';
 
 // Menu lateral: campo de busca + lista de notas agrupadas por pasta.
-export default function Sidebar({ notes, selectedId, error }) {
+export default function Sidebar({ notes, selectedId, error, indexVersion }) {
   // O que esta escrito no campo de busca.  (Parte 9)
   const [query, setQuery] = useState('');
   const [creating, setCreating] = useState(false);   // Parte 18
@@ -49,7 +49,7 @@ export default function Sidebar({ notes, selectedId, error }) {
       {error && <p className="error">{error}</p>}
 
       {searching
-        ? <SearchResults query={query} selectedId={selectedId} />
+        ? <SearchResults query={query} selectedId={selectedId} indexVersion={indexVersion} />
         : <NoteTree notes={notes} selectedId={selectedId} />}
     </aside>
   );

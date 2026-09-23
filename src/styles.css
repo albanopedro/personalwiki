@@ -395,7 +395,13 @@ body {
 /* ---------- Editor (Parte 17) ---------- */
 .note-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
 
-.edit-button, .editor-actions button, .editor-blocked button {
+/* Todo botao do wiki parte daqui: o "Editar" da nota, os do editor, os da
+   barra de aviso e os do formulario de nota nova. Antes cada parte repetia
+   as mesmas oito linhas.  (arrumado na Parte 20) */
+.edit-button,
+.editor-actions button,
+.editor-blocked button,
+.new-note-actions button {
   padding: 5px 12px;
   font: inherit;
   font-size: 12px;
@@ -405,11 +411,21 @@ body {
   border-radius: 6px;
   cursor: pointer;
 }
-.edit-button:hover, .editor-actions button:hover:not(:disabled),
-.editor-blocked button:hover { border-color: var(--accent); color: var(--accent); }
-.editor-actions button:disabled { opacity: .45; cursor: default; }
-.editor-actions .primary, .editor-blocked .primary { color: #fff; background: var(--accent); border-color: var(--accent); }
-.editor-actions .primary:hover:not(:disabled), .editor-blocked .primary:hover { color: #fff; filter: brightness(1.1); }
+.edit-button:hover,
+.editor-actions button:hover:not(:disabled),
+.editor-blocked button:hover,
+.new-note-actions button:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
+
+.editor-actions button:disabled,
+.new-note-actions button:disabled { opacity: .45; cursor: default; }
+
+/* O botao principal de cada grupo: Salvar, Criar, Salvar e sair */
+.editor-actions .primary,
+.editor-blocked .primary,
+.new-note-actions .primary { color: #fff; background: var(--accent); border-color: var(--accent); }
+.editor-actions .primary:hover:not(:disabled),
+.editor-blocked .primary:hover,
+.new-note-actions .primary:hover:not(:disabled) { color: #fff; filter: brightness(1.1); }
 
 /* O editor ocupa a coluna inteira: a barra em cima, o texto preenchendo o resto */
 .note-view.editor { display: flex; flex-direction: column; overflow: hidden; }
@@ -486,19 +502,8 @@ body {
 }
 .new-note-name:focus, .new-note-folder:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 .new-note-actions { display: flex; gap: 8px; }
-.new-note-actions button {
-  flex: 1;
-  padding: 6px 10px;
-  font: inherit;
-  font-size: 12px;
-  color: var(--text);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  cursor: pointer;
-}
-.new-note-actions .primary { color: #fff; background: var(--accent); border-color: var(--accent); }
-.new-note-actions button:disabled { opacity: .45; cursor: default; }
+/* Os dois do formulario dividem a largura; o resto vem da regra comum */
+.new-note-actions button { flex: 1; background: var(--bg); }
 .new-note-erro { margin: 0; font-size: 12px; color: #e5484d; }
 
 /* ---------- Caixinhas de tarefa (Parte 19) ---------- */
@@ -529,4 +534,16 @@ body {
   background: var(--bg-soft);
   border: 1px solid #e5484d;
   border-radius: 6px;
+}
+
+/* Aviso quando o grafo nao consegue falar com a API (Parte 20) */
+.graph-erro {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  margin: 0;
+  font-size: 13px;
+  text-align: center;
+  color: #e5484d;
 }

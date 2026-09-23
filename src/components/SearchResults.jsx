@@ -3,9 +3,10 @@ import { Link } from 'react-router';
 import { noteUrl } from '../utils/routes.js';
 import { cleanContext } from '../utils/cleanContext.js';
 import { headingText } from '../utils/markdown.js';
+import { api } from '../utils/api.js';
 
 // Resultados da busca, no lugar da lista de notas.  (Parte 9)
-export default function SearchResults({ query, selectedId }) {
+export default function SearchResults({ query, selectedId, indexVersion }) {
   const [data, setData] = useState(null);
 
   useEffect(() => {
@@ -14,9 +15,12 @@ export default function SearchResults({ query, selectedId }) {
     // Espera 200ms sem digitar antes de perguntar a API. Sem isso,
     // digitar "banco de dados" dispararia 14 buscas, uma por letra.
     const timer = setTimeout(async () => {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-      const json = res.ok ? await res.json() : { failed: true, results: [] };
-      if (!cancelled) setData(json);   // resposta de uma busca que ja ficou velha e descartada
+      try {
+        const resultado = await api(`/api/search?q=${encodeURIComponent(query)}`);
+        if (!cancelled) setData(resultado);   // se ja ficou velha, a resposta e descartada
+      } catch (err) {
+        if (!cancelled) setData({ failed: err.message, results: [] });
+      }
     }, 200);
 
     // O React roda isto quando a query muda de novo (ou o componente some):
@@ -25,10 +29,12 @@ export default function SearchResults({ query, selectedId }) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query]);
+    // O indexVersion entra aqui para a busca refazer o pedido quando o vault
+    // muda (Parte 15) - e tambem quando a API volta depois de cair.  (Parte 20)
+  }, [query, indexVersion]);
 
   if (!data) return <p className="search-info">Buscando...</p>;
-  if (data.failed) return <p className="error">A busca falhou. A API está rodando?</p>;
+  if (data.failed) return <p className="error">{data.failed}</p>;
   if (data.results.length === 0) return <p className="search-info">Nada encontrado.</p>;
 
   return (
