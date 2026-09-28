@@ -52,6 +52,18 @@ function rebuildIndex(motivo) {
 }
 
 /**
+ * Le um texto que veio do navegador (na URL ou no corpo do pedido).
+ *
+ * O String(... ?? '') garante um texto, mesmo quando o campo nao veio. O
+ * normalize('NFC') e a pegadinha de acento da Parte 4: o "í" pode chegar
+ * como um caractere ou como dois, e o indice guarda tudo no formato de um so.
+ * Sem isso, a nota existe mas "nao e encontrada".
+ */
+function lerTexto(valor) {
+  return String(valor ?? '').normalize('NFC');
+}
+
+/**
  * O caminho real do arquivo de uma nota. Esta funcao e a UNICA porta de
  * entrada para escrever no vault, e tem duas travas.  (Parte 17)
  *
@@ -105,7 +117,7 @@ app.get('/api/notes', (req, res) => {
 // O id vai na URL assim:  /api/note?id=Apostila.../01 — Fundamentos.md
 app.get('/api/note', (req, res) => {
   // Mesma pegadinha de acento da Parte 4: normaliza antes de procurar.
-  const id = String(req.query.id ?? '').normalize('NFC');
+  const id = lerTexto(req.query.id);
   const note = index.notes.get(id);
 
   if (!note) {
@@ -182,7 +194,7 @@ app.get('/api/graph', (req, res) => {
 // gravacao) e o mais atual possivel. Ele e a base da protecao contra
 // escrever por cima de uma alteracao feita no Obsidian.
 app.get('/api/raw', (req, res) => {
-  const id = String(req.query.id ?? '').normalize('NFC');
+  const id = lerTexto(req.query.id);
   const full = notePath(id);
   if (!full) {
     return res.status(404).json({ error: `Nota não encontrada: ${id}` });
@@ -200,7 +212,7 @@ app.get('/api/raw', (req, res) => {
 //
 // A UNICA rota do wiki que escreve no seu vault.
 app.put('/api/note', (req, res) => {
-  const id = String(req.body?.id ?? '').normalize('NFC');
+  const id = lerTexto(req.body?.id);
   const raw = req.body?.raw;
   const expected = Number(req.body?.mtime);
 
@@ -247,8 +259,8 @@ app.put('/api/note', (req, res) => {
 // vem digitado por voce, entao ele passa por uma peneira antes de virar um
 // caminho no disco.
 app.post('/api/note', (req, res) => {
-  const name = String(req.body?.name ?? '').normalize('NFC').trim();
-  const folder = String(req.body?.folder ?? '').normalize('NFC');
+  const name = lerTexto(req.body?.name).trim();
+  const folder = lerTexto(req.body?.folder);
 
   // Peneira do nome. A barra e a que mais importa: sem ela, "a/b" sairia da
   // pasta escolhida. O ponto no comeco esconderia o arquivo, e o Obsidian
