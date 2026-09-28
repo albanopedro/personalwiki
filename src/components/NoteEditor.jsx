@@ -46,8 +46,11 @@ export default function NoteEditor({ note, resolveLink, onClose }) {
     return () => window.removeEventListener('beforeunload', avisar);
   }, [dirty]);
 
+  // Devolve true se o texto ficou gravado no disco, false se nao. Quem chama
+  // precisa saber: o "Salvar e sair" so pode sair se deu certo.
   async function salvar() {
-    if (!dirty || saving) return;
+    if (!dirty) return true;      // nada a gravar: o disco ja tem este texto
+    if (saving) return false;     // um salvamento ja esta a caminho
     setSaving(true);
     setMessage(null);
 
@@ -59,8 +62,10 @@ export default function NoteEditor({ note, resolveLink, onClose }) {
       setMtime(salvo.mtime);
       setSaved(draft);
       setMessage({ tipo: 'ok', texto: 'Salvo no vault.' });
+      return true;
     } catch (err) {
       setMessage({ tipo: 'erro', texto: err.message });
+      return false;
     } finally {
       setSaving(false);
     }
@@ -114,7 +119,9 @@ export default function NoteEditor({ note, resolveLink, onClose }) {
       {blocker.state === 'blocked' && (
         <div className="editor-blocked">
           <span>Você tem alterações não salvas.</span>
-          <button className="primary" onClick={() => { salvar().then(() => blocker.proceed()); }}>
+          {/* Se o salvamento falhar, NAO sai: a barra continua aqui e a mensagem
+              de erro aparece em cima do texto, que continua no editor. */}
+          <button className="primary" onClick={() => { salvar().then((ok) => { if (ok) blocker.proceed(); }); }}>
             Salvar e sair
           </button>
           <button onClick={() => blocker.proceed()}>Sair sem salvar</button>

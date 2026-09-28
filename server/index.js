@@ -57,16 +57,30 @@ function rebuildIndex(motivo) {
  *
  * 1. O id precisa ser de uma nota que o indice CONHECE. Ninguem inventa
  *    caminho: "../../.ssh/config" nao esta no indice, entao nao passa.
- * 2. Mesmo assim, o caminho final precisa cair dentro da pasta do vault.
+ * 2. Mesmo assim, o caminho final precisa cair dentro da pasta do vault
+ *    (a funcao dentroDoVault, logo abaixo).
  *    Duas travas para a mesma coisa e de proposito: se um dia a primeira
  *    mudar de ideia, a segunda ainda segura.
  */
 function notePath(id) {
   if (!index.notes.has(id)) return null;
+  return dentroDoVault(id);
+}
+
+/**
+ * O caminho completo de um id - ou null, se ele sairia da pasta do vault.
+ *
+ *   "Apostila/01 — Fundamentos.md"  -> "/Users/.../Obsidian Vault/Apostila/01 — Fundamentos.md"
+ *   "../../.ssh/config"             -> null
+ *
+ * O path.resolve "anda" pelos .. do caminho; se no fim ele nao comecar com a
+ * pasta do vault, o id tentou escapar. E a mesma trava para as duas rotas que
+ * gravam: salvar (pelo notePath, acima) e criar nota.  (Partes 17 e 18)
+ */
+function dentroDoVault(id) {
   const vault = path.resolve(config.vaultPath);
   const full = path.resolve(vault, id);
-  if (!full.startsWith(vault + path.sep)) return null;
-  return full;
+  return full.startsWith(vault + path.sep) ? full : null;
 }
 
 // Pergunta 1: "quais notas existem?"
@@ -256,9 +270,8 @@ app.post('/api/note', (req, res) => {
   }
 
   const id = path.join(folder, `${name}.md`);
-  const vault = path.resolve(config.vaultPath);
-  const full = path.resolve(vault, id);
-  if (!full.startsWith(vault + path.sep)) {
+  const full = dentroDoVault(id);
+  if (!full) {
     return res.status(400).json({ error: 'Caminho inválido.' });
   }
 

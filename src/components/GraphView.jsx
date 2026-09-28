@@ -43,7 +43,9 @@ export default function GraphView({ indexVersion }) {
   useEffect(() => {
     let cancelled = false;
     api('/api/graph')
-      .then((data) => { if (!cancelled) setGraph(data); })
+      // Deu certo: limpa o aviso de uma falha anterior (a API caiu e voltou),
+      // como o App faz com os erros dele desde a Parte 20.
+      .then((data) => { if (!cancelled) { setGraph(data); setError(null); } })
       .catch((err) => { if (!cancelled) setError(err.message); });
     return () => { cancelled = true; };
   }, [indexVersion]);
