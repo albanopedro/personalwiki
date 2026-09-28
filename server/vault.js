@@ -100,7 +100,7 @@ export function buildIndex() {
 
   // builtAt: o momento em que este indice foi montado. Funciona como o
   // "numero da versao" do indice: se mudou, alguma nota mudou.  (Parte 15)
-  return { notes, byName, backlinks, broken, builtAt: Date.now() };
+  return { notes, backlinks, broken, builtAt: Date.now() };
 }
 
 /**

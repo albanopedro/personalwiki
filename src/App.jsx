@@ -34,13 +34,13 @@ export default function App() {
   // nota -> id. Montada com a lista do menu, que ja estava aqui.  (Parte 13)
   const byName = useMemo(() => new Map(notes.map((n) => [toKey(n.name), n.id])), [notes]);
 
-  // Converte a nota aberta em HTML + lista de titulos, ja traduzindo cada
-  // [[link]] para o endereco da nota. So refaz quando a nota ou a lista mudam.
-  // Espera a lista chegar: sem ela, todo link pareceria quebrado.  (Partes 10 e 13)
   // A traducao de um nome de [[link]] no id da nota. Fica separada porque o
   // editor tambem usa, para desenhar a previa do rascunho.  (Partes 13 e 17)
   const resolveLink = useMemo(() => (name) => byName.get(toKey(name)) ?? null, [byName]);
 
+  // Converte a nota aberta em HTML + lista de titulos, ja traduzindo cada
+  // [[link]] para o endereco da nota. So refaz quando a nota ou a lista mudam.
+  // Espera a lista chegar: sem ela, todo link pareceria quebrado.  (Partes 10 e 13)
   const rendered = useMemo(() => {
     if (!note || byName.size === 0) return null;
     return renderMarkdown(note.body, resolveLink);

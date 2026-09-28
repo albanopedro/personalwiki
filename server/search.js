@@ -11,7 +11,7 @@
  *   "Lógica"             -> "logica"        (quem digita "logica" acha)
  *   "const&nbsp;estilo"  -> "const estilo"  (o espaco especial das Notas da Apple)
  */
-export function normalize(text) {
+function normalize(text) {
   return text
     .normalize('NFD')                  // separa cada letra do seu acento: "ó" vira "o" + "´"
     .replace(/[̀-ͯ]/g, '')   // e joga fora os acentos soltos
@@ -68,7 +68,7 @@ const HEADING = /^\s*#{1,6}\s+(.+)$/;
 export function search(index, query) {
   const terms = parseQuery(query);
   if (terms.join('').length < 2) {
-    return { query, terms, total: 0, results: [] };   // uma letra so casaria com quase tudo
+    return { total: 0, results: [] };   // uma letra so casaria com quase tudo
   }
 
   // O texto tem TODOS os termos? (em qualquer ordem, cada um no comeco de uma palavra)
@@ -116,5 +116,5 @@ export function search(index, query) {
   }
 
   results.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, 'pt-BR'));
-  return { query, terms, total: results.length, results: results.slice(0, 30) };
+  return { total: results.length, results: results.slice(0, 30) };
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useBlocker } from 'react-router';
 import { parseFrontmatter } from '../../server/parser.js';
 import { renderMarkdown } from '../utils/markdown.js';
@@ -15,7 +15,6 @@ export default function NoteEditor({ note, resolveLink, onClose }) {
   const [preview, setPreview] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);   // { tipo: 'erro' | 'ok', texto }
-  const textRef = useRef(null);
 
   const dirty = draft !== null && draft !== saved;
 
@@ -104,7 +103,6 @@ export default function NoteEditor({ note, resolveLink, onClose }) {
         <article className="markdown" dangerouslySetInnerHTML={{ __html: previewHtml }} />
       ) : (
         <textarea
-          ref={textRef}
           className="editor-text"
           value={draft}
           spellCheck="false"

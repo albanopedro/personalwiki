@@ -103,7 +103,16 @@ app.get('/api/note', (req, res) => {
     fromName: index.notes.get(b.from).name,   // a tela vai querer mostrar o nome
   }));
 
-  res.json({ ...note, backlinks });
+  // So o que a tela usa. Os links e os aliases ficam no indice: servem para
+  // montar os backlinks e para a busca, mas a tela nunca le.
+  res.json({
+    id: note.id,
+    name: note.name,
+    folder: note.folder,
+    tags: note.tags,
+    body: note.body,
+    backlinks,
+  });
 });
 
 // Pergunta 3: "onde aparece este texto?"  (Parte 9)
